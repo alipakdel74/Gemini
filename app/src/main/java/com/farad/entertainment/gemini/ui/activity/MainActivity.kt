@@ -37,11 +37,12 @@ class MainActivity : AppCompatActivity() {
                     "\n" +
                     "Word: ${edtGemini.text}\n" +
                     "\n" +
-                    "1. What is the part of speech? (e.g. noun, verb, adjective, etc.)\n" +
-                    "2. Give one simple English sentence using this word.\n" +
-                    "3. Translate that sentence into Persian (Farsi)." +
+                    ": What is the part of speech? (e.g. noun, verb, adjective, etc.)\n" +
+                    "example: For each (e.g. noun, verb, adjective, etc.), write a simple English sentence using this word..\n" +
+                    "mean: Translate that sentence into Persian (Farsi).\n" +
                     "Just remove the extra sentences\n" +
-                    "It's very simple, just leave what I want."
+                    "It's very simple, just leave what I want." +
+                    "and end create clip art image"
             viewModel.geminiResponse(algorithm)
         }
 
@@ -68,6 +69,7 @@ class MainActivity : AppCompatActivity() {
             viewModel.geminiResponse.collect {
                 if (it is ApiResponse.Success) {
                     textView.text = it.body?.candidates?.first()?.content?.parts?.first()?.text
+                        ?.replace("*","")?.trim()
                 }
 
                 if(it is ApiResponse.ExpireToken){
