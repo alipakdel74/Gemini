@@ -1,16 +1,20 @@
 package com.farad.entertainment.gemini.ui.activity
 
-import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
-import androidx.appcompat.widget.AppCompatEditText
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.farad.entertainment.gemini.R
+import com.farad.entertainment.gemini.api.model.WordEntry
 import com.farad.entertainment.gemini.api.network.ApiResponse
+import com.farad.entertainment.gemini.ui.adapter.MyAdapter
 import com.farad.entertainment.gemini.ui.viewModel.GeminiViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -19,16 +23,22 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModel by viewModel<GeminiViewModel>()
 
-    @SuppressLint("MissingInflatedId")
+    private val edtGemini by lazy { findViewById<AppCompatTextView>(R.id.edt_gemini) }
+    private val txtDesc by lazy { findViewById<AppCompatTextView>(R.id.txt_desc) }
+
+    private var alertDialog: AlertDialog? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val linearLoading = findViewById<LinearLayout>(R.id.linear_loading)
-        val edtGemini = findViewById<AppCompatTextView>(R.id.edt_gemini)
         val button = findViewById<AppCompatButton>(R.id.action_go)
-        val txtDesc = findViewById<AppCompatTextView>(R.id.txt_desc)
         val textView = findViewById<AppCompatTextView>(R.id.txt_response)
+
+        edtGemini.setOnClickListener {
+            alertDialog?.show()
+        }
 
         button.setOnClickListener {
             if (edtGemini.text.isNullOrEmpty())
@@ -53,15 +63,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            viewModel.words.collect{
-                val data = it.first()
-                edtGemini.text = data.word
-                txtDesc.text = "pronun : ${data.pronun}"
-                    .plus("\n")
-                    .plus("example : ${data.example}")
-                    .plus("\n")
-                    .plus("example2 : ${data.example2}")
-                    .plus("\n")
+            viewModel.words.collect {
+                showRecyclerDialog(it.take(20))
             }
         }
 
@@ -69,13 +72,35 @@ class MainActivity : AppCompatActivity() {
             viewModel.geminiResponse.collect {
                 if (it is ApiResponse.Success) {
                     textView.text = it.body?.candidates?.first()?.content?.parts?.first()?.text
-                        ?.replace("*","")?.trim()
+                        ?.replace("*", "")?.trim()
                 }
 
-                if(it is ApiResponse.ExpireToken){
+                if (it is ApiResponse.ExpireToken) {
                     textView.text = "HTTP_FORBIDDEN  403"
                 }
             }
         }
+    }
+
+    private fun showRecyclerDialog(items: List<WordEntry>) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_recycler, null)
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerView)
+
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = MyAdapter(items) { selectedItem ->
+            edtGemini.text = selectedItem.word
+            txtDesc.text = "pronun : ${selectedItem.pronun}"
+                .plus("\n")
+                .plus("example : ${selectedItem.example}")
+                .plus("\n")
+                .plus("example2 : ${selectedItem.example2}")
+                .plus("\n")
+        }
+
+        alertDialog = AlertDialog.Builder(this)
+            .setTitle("Select Item")
+            .setView(dialogView)
+            .setNegativeButton("Cancel", null)
+            .create()
     }
 }
