@@ -34,9 +34,10 @@ class MainActivity : AppCompatActivity() {
 
         val linearLoading = findViewById<LinearLayout>(R.id.linear_loading)
         val button = findViewById<AppCompatButton>(R.id.action_go)
+        val actionSelect = findViewById<AppCompatButton>(R.id.action_select)
         val textView = findViewById<AppCompatTextView>(R.id.txt_response)
 
-        edtGemini.setOnClickListener {
+        actionSelect.setOnClickListener {
             alertDialog?.show()
         }
 
@@ -46,13 +47,12 @@ class MainActivity : AppCompatActivity() {
             val algorithm = "Please analyze the following English\n" +
                     "\n" +
                     "Word: ${edtGemini.text}\n" +
-                    "\n" +
-                    ": What is the part of speech? (e.g. noun, verb, adjective, etc.)\n" +
-                    "example: For each (e.g. noun, verb, adjective, etc.), write a simple English sentence using this word..\n" +
+                    "mean: persian(farsi)\n" +
+                    "Determine what types it has. : (e.g. noun, verb, adjective, etc.)\n" +
+                    "Example: For each (e.g. noun, verb, adjective, etc.), write an example with the Persian meaning.\n\n" +
                     "mean: Translate that sentence into Persian (Farsi).\n" +
                     "Just remove the extra sentences\n" +
-                    "It's very simple, just leave what I want." +
-                    "and end create clip art image"
+                    "It's very simple, just leave what I want."
             viewModel.geminiResponse(algorithm)
         }
 
@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             viewModel.words.collect {
-                showRecyclerDialog(it.take(20))
+                showRecyclerDialog(it)
             }
         }
 
@@ -95,6 +95,7 @@ class MainActivity : AppCompatActivity() {
                 .plus("\n")
                 .plus("example2 : ${selectedItem.example2}")
                 .plus("\n")
+            alertDialog?.dismiss()
         }
 
         alertDialog = AlertDialog.Builder(this)
